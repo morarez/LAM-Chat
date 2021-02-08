@@ -5,13 +5,13 @@ import java.util.Scanner;
 
 public class LAM {
 
-    public static void main(){
+    public static void main(String[] args){
         Room chatRoom = new Room("LAM");
         Scanner sc = new Scanner(System.in);
         while (true){
             System.out.println("Please enter a username to join our chat (x to close the app)");
             String username = sc.nextLine();
-            if (username == "x")
+            if (username.equals("x"))
                 break;
             User u = new User(username);
             System.out.println(chatRoom.getUserList());

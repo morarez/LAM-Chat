@@ -1,5 +1,6 @@
 package it.unipi.lam;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Room {
@@ -10,8 +11,8 @@ public class Room {
 
     public Room(String roomName){
         this.roomName = roomName;
-        this.userList = null;
-        this.chatMessages = null;
+        this.userList = new ArrayList<>();
+        this.chatMessages = new ArrayList<>();
     }
 
     public List<Message> getChatMessages() {
@@ -40,7 +41,7 @@ public class Room {
 
     public void join(User u){
         for (User member: userList){
-            if(u.getUsername() == member.getUsername()){
+            if(u.getUsername().equals( member.getUsername())){
                 System.out.println("This username is currently being used");
                 return;
             }
