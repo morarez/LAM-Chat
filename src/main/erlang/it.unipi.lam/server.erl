@@ -22,11 +22,11 @@ loop(Clients) ->
   %% receive messages from other processes
   receive
     %% if someone joins:
-    {From, connect, Username} ->
+    {From, connect, User} ->
       %%link the process. read about this in here: https://learnyousomeerlang.com/errors-and-processes
       link(From),
-      broadcast(join, Clients, {Username}),
-      loop([{Username, From} | Clients]);
+      broadcast(join, Clients, {User}),
+      loop([{User, From} | Clients]);
     %% if someone sends a msg:
     {From, send, Msg} ->
       broadcast(new_msg, Clients, {find(From, Clients), Msg}),
