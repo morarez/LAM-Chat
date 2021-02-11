@@ -39,14 +39,17 @@ public class Room {
         this.userList = userList;
     }
 
-    public void join(User u){
+
+    public boolean join(User u){
         for (User member: userList){
             if(u.getUsername().equals( member.getUsername())){
                 System.out.println("This username is currently being used");
-                return;
+                return false;
             }
         }
+
         userList.add(u);
+        return true;
     }
 
     public void leave(User u){
@@ -65,6 +68,5 @@ public class Room {
     public void sendMessage(Message m){
         chatMessages.add(m);
     }
-
 
 }

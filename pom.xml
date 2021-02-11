@@ -12,5 +12,21 @@
         <maven.compiler.source>15</maven.compiler.source>
         <maven.compiler.target>15</maven.compiler.target>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>repo2-jinterface</id>
+            <name>repository2 for Erlang jinterface</name>
+            <url>https://clojars.org/repo/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>clojang</groupId>
+            <artifactId>erlang-jinterface</artifactId>
+            <version>1.10-1</version>
+        </dependency>
+    </dependencies>
     
 </project>
