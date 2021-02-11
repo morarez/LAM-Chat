@@ -16,7 +16,6 @@ public class Client {
     private String mboxname = "ahmedbox";
     private String cookie = "";
     private User user;
-
     private String servername = "avg_server";
     private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
 
@@ -47,7 +46,8 @@ public class Client {
     }
 
     public static Client getInstance(User u) throws IOException {
-       if (c == null) throw new RuntimeException();
+       if (u == null) 
+       {throw new RuntimeException();}
        else {
            c = new Client(u);
            return c;
@@ -81,6 +81,24 @@ public class Client {
         r.sendMessage(m);
 
     }
+    
+    public static void send(Room r) throws OtpErlangExit, OtpErlangDecodeException {
+    	OtpErlangString username = new OtpErlangString(c.getUser().getUsername());
+        OtpErlangString msgType = new OtpErlangString("send");
+        Scanner sc= new Scanner(System.in);
+        System.out.println("Enter your message to send: ");
+        String message= sc.nextLine();
+        OtpErlangString msg = new OtpErlangString(message+" (Sent by: )"+username );
+        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{c.mbox.self(), msgType, msg});
+        c.mbox.send(c.getServername(), c.getServerMbox(), outMsg);
+        User sender = new User(username.toString());
+        Date date = new Date();
+        Message m = new Message(sender,msg.toString(),date);
+        r.sendMessage(m);
+        System.out.println("Message sent!");
+    }
+    
+    
 
     public static void main(String[] args) throws IOException, OtpErlangExit, OtpErlangDecodeException {
 
@@ -96,11 +114,13 @@ public class Client {
                     break;
                 u = new User(username);
                 joined = chatRoom.join(u);
-            } while (!username.isEmpty() || !joined);
+            } while (username.isEmpty() && !joined);
             getInstance(u);
             joinChatRoom(chatRoom);
+            System.out.println("Joined chat room: "+chatRoom.getRoomName());
             while (true){
+            	send(chatRoom);
                 receive(chatRoom);
-            }
+            } 
         }
 }
