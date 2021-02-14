@@ -9,6 +9,10 @@ public class Room {
     private List<User> userList;
     private List<Message> chatMessages;
 
+    public Room(){
+        this.userList = new ArrayList<>();
+        this.chatMessages = new ArrayList<>();
+    }
     public Room(String roomName){
         this.roomName = roomName;
         this.userList = new ArrayList<>();
@@ -40,21 +44,13 @@ public class Room {
     }
 
 
-    public boolean join(User u){
-        for (User member: userList){
-            if(u.getUsername().equals( member.getUsername())){
-                System.out.println("This username is currently being used");
-                return false;
-            }
-        }
-
-        userList.add(u);
-        return true;
+    public void join(User u){
+        this.userList.add(u);
     }
 
     public void leave(User u){
         u.changeStatus(false);
-        userList.remove(u);
+        this.userList.remove(u);
     }
 
     public void suspend(User u){
@@ -66,7 +62,8 @@ public class Room {
     }
 
     public void sendMessage(Message m){
-        chatMessages.add(m);
+        System.out.format("%s: %s \n", m.getAuthor(), m.getContent());
+        this.chatMessages.add(m);
     }
 
 }
