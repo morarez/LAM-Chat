@@ -39,6 +39,9 @@ loop(Clients) ->
           loop(Clients)
       end;
 
+    {From, clientListen, User} ->
+      loop(reset(Clients, User, From));
+
     %%ChatRoom Messaging
     {From, send, Msg, User, room, Room} ->
       broadcast(new_msg, filterByRoom(Clients, Room), {User, Msg}),
@@ -58,6 +61,17 @@ loop(Clients) ->
     _ ->
       loop(Clients)
   end.
+
+
+reset([H|T], User, From) ->
+  {Room, Username, _} = H,
+  if
+    User == Username ->
+      [{Room, Username, From}|T];
+    true ->
+      reset([T|H], User, From)
+  end.
+
 
 filterByUser(Clients, User) ->
   filterByUser(Clients, User, []).

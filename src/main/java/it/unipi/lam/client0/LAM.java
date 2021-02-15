@@ -138,7 +138,7 @@ public class LAM {
     }
 
     public static void main(String[] args) throws IOException, OtpErlangExit, OtpErlangDecodeException, InterruptedException {
-        ExecutorService myExecSrv = Executors.newFixedThreadPool(2);
+        ExecutorService myExecSrv = Executors.newFixedThreadPool(1);
         System.out.println("Welcome to LAM!");
         System.out.println("Please select the chatroom you would like to join or create a new one");
         LAM lam = new LAM();
@@ -148,8 +148,6 @@ public class LAM {
 
         Room chatRoom = new Room();
         User user;
-
-
 
         Scanner sc = new Scanner(System.in);
         chatRoom.setRoomName(sc.nextLine());
@@ -166,7 +164,7 @@ public class LAM {
         Thread clientReceiver = new Thread(new ClientReceiver(lam.getClient()));
         Thread clientSender = new Thread(new ClientSender(lam.getClient()));
 
-        clientReceiver.start();
+        myExecSrv.execute(clientReceiver);
 
         while (true){
             System.out.println("To send a message write send then Enter then the message" +
@@ -180,6 +178,7 @@ public class LAM {
                 break;
             }
         }
-        clientReceiver.stop();
+
+        myExecSrv.shutdown();
     }
 }

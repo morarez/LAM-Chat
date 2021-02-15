@@ -4,22 +4,21 @@ import com.ericsson.otp.erlang.OtpErlangDecodeException;
 import com.ericsson.otp.erlang.OtpErlangExit;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ClientReceiver implements Runnable{
     private Client c;
-    private boolean exit = false;
+
     public ClientReceiver(Client c) throws IOException {
         this.c = c;
     }
 
-    public void stop() {
-        this.exit = true;
-    }
 
     @Override
     public void run() {
         try {
-            while(!exit) {
+            c.sendListenAddress();
+            while(true) {
                 c.receive();
             }
         } catch (OtpErlangExit otpErlangExit) {

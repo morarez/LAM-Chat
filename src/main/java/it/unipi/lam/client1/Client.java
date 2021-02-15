@@ -123,6 +123,13 @@ public class Client{
         }
     }
 
+    public void sendListenAddress(){
+        OtpErlangString username = new OtpErlangString(this.user.getUsername());
+        OtpErlangAtom msgType = new OtpErlangAtom("clientListen");
+        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, username});
+        this.mbox.send(this.servername, this.servermbox, outMsg);
+    }
+
     public void send(String to, boolean type) throws OtpErlangExit, OtpErlangDecodeException {
         OtpErlangAtom destType;
         if (type){
