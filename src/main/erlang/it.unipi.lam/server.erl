@@ -1,13 +1,13 @@
 %%%-------------------------------------------------------------------
-%%% @author mortezaarezoomandan
+%%% @author ahmed
 %%% @copyright (C) 2021, <COMPANY>
 %%% @doc
 %%%
 %%% @end
-%%% Created : 10. Feb 2021 11:10
+%%% Created : 16. Feb 2021 3:14 PM
 %%%-------------------------------------------------------------------
 -module(server).
--author("mortezaarezoomandan").
+-author("ahmed").
 -compile([debug_info]).
 
 %% API
@@ -27,22 +27,25 @@ loop(Clients) ->
       From ! {rooms, getRooms(Clients)},
       loop(Clients);
   %% if someone joins:
-    {From, connect, Room} ->
+    {From, connect, Room, Username} ->
       %%link the process. read about this in here: https://learnyousomeerlang.com/errors-and-processes
       link(From),
-      From ! {users, getUsers(filterByRoom(Clients, Room))},
-      receive
-        {From, done, Username} ->
+      TakenNames = getUsers(filterByRoom(Clients, Room)),
+      Found = find(TakenNames, Username),
+      if
+        Found ->
+          From ! {taken, Username},
+          loop(Clients);
+        true ->
+          From ! {users, getUsers(filterByRoom(Clients, Room))},
           broadcast(join, filterByRoom(Clients, Room), {Username}),
-          loop([{Room, Username, From} | Clients]);
-        _ ->
-          loop(Clients)
+          loop([{Room, Username, From} | Clients])
       end;
 
     {From, clientListen, User} ->
       loop(reset(Clients, User, From));
 
-    %%ChatRoom Messaging
+  %%ChatRoom Messaging
     {From, send, Msg, User, room, Room} ->
       broadcast(new_msg, filterByRoom(Clients, Room), {User, Msg}),
       loop(Clients);
@@ -52,11 +55,11 @@ loop(Clients) ->
       broadcast(new_msg, filterByUser(Clients, User), {Sender, Msg}),
       loop(Clients);
 
-    %% if someone exits:
-  %%redo this
-    {'EXIT', From, _} ->
-      broadcast(disconnect, Clients, {From}),
-      loop(remove(From, Clients));
+  %% if someone exits:
+    {'EXIT', From, Room, User} ->
+      NewClients = remove(User, Clients),
+      broadcast(disconnect, filterByRoom(NewClients, Room), {User}),
+      loop(NewClients);
   %% pattern didn't match:
     _ ->
       loop(Clients)
@@ -97,7 +100,26 @@ getRooms([], Result) ->
 
 getRooms([H|T], Result) ->
   {Room, _, _} = H,
-  getRooms(T, [Room|Result]).
+  Found = find(Result, Room),
+  if
+    Found == true ->
+      getRooms(T, Result);
+    true ->
+      getRooms(T, [Room|Result])
+  end.
+
+find([], _) ->
+  false;
+
+find([H|T], Identifier) ->
+  Existing = H,
+  if
+    Identifier == Existing ->
+      true;
+    true ->
+      find(T, Identifier)
+  end.
+
 
 getUsers(Clients)->
   getUsers(Clients, []).
@@ -126,34 +148,25 @@ filterByRoom([H|T], Room, Result) ->
 
 
 broadcast(join, Clients, {User}) ->
-  broadcast({info, User, " joined the chatroom."}, Clients);
+  broadcast({info, User, joined}, Clients);
 
 broadcast(new_msg, Clients, {User, Msg}) ->
   broadcast({new_msg, User, Msg}, Clients);
 
 broadcast(disconnect, Clients, {User}) ->
-  broadcast({info, User, " left the chatroom."}, Clients).
+  broadcast({info, User, left}, Clients).
 
 broadcast(Msg, Clients) ->
   lists:foreach(fun({_,_, Pid}) -> Pid ! Msg end, Clients).
 
 
-%%find(From, [H|T]) ->
-%%  {_, User, Pid} = H,
-%%  if
-%%    Pid == From ->
-%%      User;
-%%    true ->
-%%      find(From, T)
-%%  end.
+remove(User, [H|T]) ->
+  {_, Username, _} = H,
+  if
+    Username == User ->
+      T;
+    true ->
+      remove(User, [T|H])
+  end.
 
 
-%%
-%%find(From, [{_, User, Pid} | _]) when From == Pid ->
-%%  User;
-%%find(From, [_ | T]) ->
-%%  find(From, T).
-
-remove(From, Clients) ->
-  %remove the client from the list. filters: https://learnyousomeerlang.com/higher-order-functions#maps-filters-folds
-  lists:filter(fun({_, _, Pid}) -> Pid =/= From end, Clients).
