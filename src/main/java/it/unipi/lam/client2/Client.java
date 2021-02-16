@@ -1,4 +1,4 @@
-package it.unipi.lam.client0;
+package it.unipi.lam.client2;
 
 import com.ericsson.otp.erlang.*;
 import it.unipi.lam.Message;

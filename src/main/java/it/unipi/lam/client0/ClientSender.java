@@ -4,15 +4,17 @@ import com.ericsson.otp.erlang.OtpErlangDecodeException;
 import com.ericsson.otp.erlang.OtpErlangExit;
 import it.unipi.lam.User;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 
 public class ClientSender implements Runnable{
-    private Client c;
+    private final Client c;
+    private final CountDownLatch latch;
 
-    public ClientSender(Client c) throws IOException {
+    public ClientSender(Client c, CountDownLatch latch) {
         this.c = c;
+        this.latch = latch;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class ClientSender implements Runnable{
                 ans = sc.nextLine();
                 List<User> chatUsers = this.c.getChatRoom().getUserList();
                 for (User u: chatUsers){
-                    if (u.getUsername().equals(ans)){
+                    if (u.getUsername().equals(ans) && !u.getUsername().equals(this.c.getUser().getUsername())){
                         this.c.send(u.getUsername(), false);
                         sent = true;
                         break;
@@ -38,10 +40,9 @@ public class ClientSender implements Runnable{
                 }
                 if(!sent) System.out.println("Username does not exist in this chat room");
             }
-        } catch (OtpErlangExit otpErlangExit) {
+        } catch (OtpErlangExit | OtpErlangDecodeException otpErlangExit) {
             otpErlangExit.printStackTrace();
-        } catch (OtpErlangDecodeException e) {
-            e.printStackTrace();
         }
+        latch.countDown();
     }
 }

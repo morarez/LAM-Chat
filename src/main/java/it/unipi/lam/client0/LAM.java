@@ -5,19 +5,28 @@ import it.unipi.lam.Room;
 import it.unipi.lam.User;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LAM {
     private Client client;
+    private static int x = 1000;
     private String servername = "lamchat";
     private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
 
     public LAM(){
 
+    }
+
+    public static void incX() {
+        x += 1 ;
+    }
+
+    public static int getX() {
+        return x;
     }
 
     public void setClient(Client client) {
@@ -52,19 +61,14 @@ public class LAM {
         OtpErlangObject msg = this.client.getMbox().receive();
         OtpErlangTuple t = (OtpErlangTuple) msg;
 
-        System.out.println("msg received: " + msg.toString());
-
         msgType = (OtpErlangAtom) t.elementAt(0);
 
         OtpErlangAtom rooms = new OtpErlangAtom("rooms");
 
         if(msgType.equals(rooms)){
             OtpErlangList availableRooms = (OtpErlangList) t.elementAt(1);
-            List<String> chatRooms = new ArrayList<>();
-            for (OtpErlangObject r: availableRooms){
-                chatRooms.add(r.toString());
-            }
-            System.out.println(chatRooms);
+            System.out.print("Current Rooms: ");
+            System.out.println(availableRooms);
         }
         else{
             System.out.println("Server is behaving abnormally");
@@ -74,60 +78,44 @@ public class LAM {
     public Room handleLocalData(Room chatRoom, String username, OtpErlangList currentUsers){
         for (OtpErlangObject u: currentUsers){
             String name = u.toString();
+            name = name.replace("\"", "");
+            System.out.println(name);
             User user = new User(name);
             chatRoom.join(user);
         }
-        User user = new User(username);
-        System.out.println(user.getUsername());
+        User user = new User(username.replace("\"", ""));
         chatRoom.join(user);
         return chatRoom;
     }
 
     public Room joinRoom(Room chatRoom) throws OtpErlangExit, OtpErlangDecodeException {
         Scanner sc = new Scanner(System.in);
-        System.out.println("Please enter a username");
-        String username = sc.nextLine();
-
-
-        OtpErlangAtom msgType = new OtpErlangAtom("connect");
+        String username;
+        OtpErlangAtom msgType;
         OtpErlangString roomname = new OtpErlangString(chatRoom.getRoomName());
-        OtpErlangString potentialUsername = new OtpErlangString(username);
-
-        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.client.getMbox().self(), msgType, roomname});
-        this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
-
-
-        OtpErlangObject msg = this.client.getMbox().receive();
-        OtpErlangTuple t = (OtpErlangTuple) msg;
-        System.out.println("msg received: " + msg.toString());
-
-        msgType = (OtpErlangAtom) t.elementAt(0);
+        OtpErlangAtom no = new OtpErlangAtom("taken");
         OtpErlangAtom users = new OtpErlangAtom("users");
-        if(msgType.equals(users)){
-            OtpErlangList currentUsers = (OtpErlangList) t.elementAt(1);
+        OtpErlangObject content;
+        do {
+            msgType  = new OtpErlangAtom("connect");
+            System.out.println("Please enter a username");
+            username = sc.nextLine();
+            OtpErlangString potentialUsername = new OtpErlangString(username);
+            OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.client.getMbox().self(), msgType, roomname, potentialUsername});
 
-            boolean unique = true;
-            do {
-                for (OtpErlangObject u : currentUsers) {
-                    if(username.equals(u.toString())){
-                        unique = false;
-                        break;
-                    }
-                    else{
-                        unique = true;
-                    }
-                }
-                if (!unique){
-                    System.out.println("Please enter a new username");
-                    username = sc.nextLine();
-                }
-            } while(!unique);
-
-            msgType = new OtpErlangAtom("done");
-            potentialUsername = new OtpErlangString(username);
-            outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.client.getMbox().self(), msgType, potentialUsername});
             this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
 
+            OtpErlangObject msg = this.client.getMbox().receive();
+            OtpErlangTuple t = (OtpErlangTuple) msg;
+
+            msgType = (OtpErlangAtom) t.elementAt(0);
+            content = t.elementAt(1);
+
+        }while (msgType.equals(no));
+
+        if(msgType.equals(users)){
+            System.out.println("Current Users: " + content);
+            OtpErlangList currentUsers = (OtpErlangList) content;
             return handleLocalData(chatRoom, username, currentUsers);
         }
 
@@ -137,48 +125,76 @@ public class LAM {
         }
     }
 
+    public void leaveRoom() {
+        OtpErlangAtom msgType = new OtpErlangAtom("EXIT");
+        OtpErlangString roomname = new OtpErlangString(this.getClient().getChatRoom().getRoomName());
+        OtpErlangString username = new OtpErlangString(this.getClient().getUser().getUsername());
+        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{msgType, this.client.getMbox().self(), roomname, username});
+        this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
+    }
+
+
     public static void main(String[] args) throws IOException, OtpErlangExit, OtpErlangDecodeException, InterruptedException {
-        ExecutorService myExecSrv = Executors.newFixedThreadPool(1);
-        System.out.println("Welcome to LAM!");
-        System.out.println("Please select the chatroom you would like to join or create a new one");
-        LAM lam = new LAM();
-        Client anonClient = new Client("anon4@localhost", "anon4", "", lam.getServername(), lam.getServermbox());
-        lam.setClient(anonClient);
-        lam.loadData();
 
-        Room chatRoom = new Room();
-        User user;
+        while (true) {
+            ExecutorService myExecSrv = Executors.newFixedThreadPool(2);
+            CountDownLatch latch;
+            System.out.println("Welcome to LAM!");
+            System.out.println("If you want to close the app, press x");
 
-        Scanner sc = new Scanner(System.in);
-        chatRoom.setRoomName(sc.nextLine());
+            System.out.println("Please select the chatroom you would like to join or create a new one, otherwise press anything else");
 
-        chatRoom = lam.joinRoom(chatRoom);
-        List<User> users = chatRoom.getUserList();
-        user = users.get(users.size()-1);
+            LAM lam = new LAM();
+            Client anonClient = new Client("anon"+LAM.getX()+"@localhost", "anon"+LAM.getX(), "", lam.getServername(), lam.getServermbox());
 
-        Client actualClient = new Client(user.getUsername()+"@localhost", user.getUsername()+"box", "", lam.getServername(), lam.getServermbox());
-        actualClient.setChatRoom(chatRoom);
-        actualClient.setUser(user);
-        lam.setClient(actualClient);
+            lam.setClient(anonClient);
+            lam.loadData();
+            Scanner sc = new Scanner(System.in);
 
-        Thread clientReceiver = new Thread(new ClientReceiver(lam.getClient()));
-        Thread clientSender = new Thread(new ClientSender(lam.getClient()));
+            String answer = sc.nextLine();
 
-        myExecSrv.execute(clientReceiver);
-
-        while (true){
-            System.out.println("To send a message write send then Enter then the message" +
-                    ", to leave write x");
-            String ans = sc.nextLine();
-            if (ans.equals("send")){
-                clientSender.start();
-                clientSender.join();
-            }
-            else if (ans.equals("x")){
+            if (answer.equals("x")){
                 break;
             }
-        }
 
-        myExecSrv.shutdown();
+
+            Room chatRoom = new Room();
+            User user;
+            chatRoom.setRoomName(answer);
+            chatRoom = lam.joinRoom(chatRoom);
+            List<User> users = chatRoom.getUserList();
+            user = users.get(users.size() - 1);
+
+            Client actualClient = new Client(user.getUsername()+LAM.getX()+ "@localhost", user.getUsername()+LAM.getX() + "box", "", lam.getServername(), lam.getServermbox());
+            actualClient.setChatRoom(chatRoom);
+            actualClient.setUser(user);
+            lam.setClient(actualClient);
+
+            ClientReceiver clientReceiver = new ClientReceiver(lam.getClient());
+
+            myExecSrv.execute(clientReceiver);
+
+            while (true) {
+                System.out.println("To send a message write send then Enter then the message" +
+                        ", to see all users, write show then Enter, to leave the chat room write x");
+                String ans = sc.nextLine();
+                if (ans.equals("send")) {
+                    latch = new CountDownLatch(1);
+                    ClientSender clientSender = new ClientSender(lam.getClient(), latch);
+                    myExecSrv.execute(clientSender);
+                    latch.await();
+
+                } else if (ans.equals("show")) {
+                    lam.getClient().getChatRoom().showUsers();
+                } else if (ans.equals("x")) {
+                    lam.leaveRoom();
+                    break;
+                }
+            }
+            //can't close the app (need to discuss tomorrow)
+            clientReceiver.interrupt();
+            myExecSrv.shutdownNow();
+            LAM.incX();
+        }
     }
 }

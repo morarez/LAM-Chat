@@ -1,4 +1,4 @@
-package it.unipi.lam.client1;
+package it.unipi.lam.client2;
 
 import com.ericsson.otp.erlang.OtpErlangDecodeException;
 import com.ericsson.otp.erlang.OtpErlangExit;

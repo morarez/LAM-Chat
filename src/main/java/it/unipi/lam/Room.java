@@ -44,13 +44,24 @@ public class Room {
     }
 
 
+    public void showUsers(){
+        for (User u: userList){
+            System.out.println(u.getUsername());
+        }
+    }
+
     public void join(User u){
         this.userList.add(u);
     }
 
     public void leave(User u){
         u.changeStatus(false);
-        this.userList.remove(u);
+        for(User curr: userList){
+            if (curr.getUsername().equals(u.getUsername())){
+                userList.remove(curr);
+                break;
+            }
+        }
     }
 
     public void suspend(User u){
@@ -62,7 +73,7 @@ public class Room {
     }
 
     public void sendMessage(Message m){
-        System.out.format("%s: %s \n", m.getAuthor(), m.getContent());
+        System.out.format("%s: %s \n", m.getAuthor().getUsername(), m.getContent());
         this.chatMessages.add(m);
     }
 

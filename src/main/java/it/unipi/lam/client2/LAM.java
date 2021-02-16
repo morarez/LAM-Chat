@@ -1,4 +1,4 @@
-package it.unipi.lam.client1;
+package it.unipi.lam.client2;
 
 import com.ericsson.otp.erlang.*;
 import it.unipi.lam.Room;
@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
 
 public class LAM {
     private Client client;
-    private static int x = 2000;
+    private static int x = 3000;
     private String servername = "lamchat";
     private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
 

@@ -19,7 +19,7 @@ init() -> loop([]).
 
 loop(Clients) ->
   %% convert the exit signals to normal msg
-  process_flag(trap_exit, true),
+  %% process_flag(trap_exit, true),
   %% receive messages from other processes
   receive
   %%send available rooms to new user
@@ -47,7 +47,7 @@ loop(Clients) ->
 
   %%ChatRoom Messaging
     {From, send, Msg, User, room, Room} ->
-      broadcast(new_msg, filterByRoom(Clients, Room), {User, Msg}),
+      broadcast(new_msg, remove(User,filterByRoom(Clients, Room)), {User, Msg}),
       loop(Clients);
 
   %%Direct Messaging
@@ -57,7 +57,7 @@ loop(Clients) ->
 
   %% if someone exits:
     {'EXIT', From, Room, User} ->
-      NewClients = remove(User, Clients),
+      NewClients = remove(User, Room, Clients),
       broadcast(disconnect, filterByRoom(NewClients, Room), {User}),
       loop(NewClients);
   %% pattern didn't match:
@@ -66,13 +66,31 @@ loop(Clients) ->
   end.
 
 
+remove(User, Room, [H|T]) ->
+  {Roomname, Username, _} = H,
+  if
+    (Username == User) and (Roomname == Room) ->
+      T;
+    true ->
+      remove(User, T++[H])
+  end.
+
+remove(User, [H|T]) ->
+  {_, Username, _} = H,
+  if
+    Username == User ->
+      T;
+    true ->
+      remove(User, T++[H])
+  end.
+
 reset([H|T], User, From) ->
   {Room, Username, _} = H,
   if
     User == Username ->
       [{Room, Username, From}|T];
     true ->
-      reset([T|H], User, From)
+      reset(T++[H], User, From)
   end.
 
 
@@ -86,7 +104,7 @@ filterByUser([H|T], User, Result) ->
   {_, U, _} = H,
   if
     U == User ->
-      filterByUser(T, User, [U|Result]);
+      filterByUser(T, User, [H|Result]);
     true ->
       filterByUser(T, User, Result)
   end.
@@ -160,13 +178,5 @@ broadcast(Msg, Clients) ->
   lists:foreach(fun({_,_, Pid}) -> Pid ! Msg end, Clients).
 
 
-remove(User, [H|T]) ->
-  {_, Username, _} = H,
-  if
-    Username == User ->
-      T;
-    true ->
-      remove(User, [T|H])
-  end.
 
 

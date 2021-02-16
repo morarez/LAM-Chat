@@ -37,7 +37,7 @@ public class Client{
         this.cookie = cookie;
         this.nodename = nodename;
         this.mboxname = mboxname;
-        if(this.cookie==""){
+        if(this.cookie.equals("")){
             this.node = new OtpNode(this.nodename);
         }
         else{
@@ -91,23 +91,24 @@ public class Client{
         OtpErlangObject msg = this.mbox.receive();
         OtpErlangTuple t = (OtpErlangTuple) msg;
 
-        System.out.println("msg received: " + msg.toString());
-
         OtpErlangAtom msgType = (OtpErlangAtom) t.elementAt(0);
 
 
         OtpErlangAtom info = new OtpErlangAtom("info");
+        OtpErlangAtom joined = new OtpErlangAtom("joined");
+        OtpErlangAtom left = new OtpErlangAtom("left");
+
         OtpErlangAtom new_msg = new OtpErlangAtom("new_msg");
 
         if(msgType.equals(info)){
-            System.out.println(t.elementAt(1));
-            System.out.println(t.elementAt(2));
-            if (t.elementAt(2).toString().equals(" left the chatroom.")){
-                User u = new User(t.elementAt(1).toString());
+            System.out.println(t.elementAt(1) + " has " + t.elementAt(2));
+
+            if (t.elementAt(2).equals(left)){
+                User u = new User(t.elementAt(1).toString().replace("\"", ""));
                 this.chatRoom.leave(u);
             }
-            else if (t.elementAt(2).toString().equals(" joined the chatroom.")){
-                User u = new User(t.elementAt(1).toString());
+            else if (t.elementAt(2).equals(joined)){
+                User u = new User(t.elementAt(1).toString().replace("\"", ""));
                 this.chatRoom.join(u);
             }
         }
@@ -116,7 +117,7 @@ public class Client{
             OtpErlangString username = (OtpErlangString) t.elementAt(1);
             OtpErlangString message = (OtpErlangString) t.elementAt(2);
             //need to include datetime later
-            User sender = new User(username.toString());
+            User sender = new User(username.toString().replace("\"", ""));
             Date date = new Date();
             Message m = new Message(sender, message.toString(), date);
             this.chatRoom.sendMessage(m);
@@ -147,10 +148,9 @@ public class Client{
         OtpErlangString msg = new OtpErlangString(message);
         OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, msg, username, destType, destination});
         this.mbox.send(this.servername, this.servermbox, outMsg);
-        User sender = new User(username.toString());
+        User sender = new User(username.toString().replace("\"", ""));
         Date date = new Date();
         Message m = new Message(sender,msg.toString(),date);
         this.chatRoom.sendMessage(m);
-        System.out.println("Message sent!");
     }
 }
