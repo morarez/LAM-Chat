@@ -177,6 +177,3 @@ broadcast(disconnect, Clients, {User}) ->
 broadcast(Msg, Clients) ->
   lists:foreach(fun({_,_, Pid}) -> Pid ! Msg end, Clients).
 
-
-
-
