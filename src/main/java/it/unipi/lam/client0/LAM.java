@@ -15,10 +15,9 @@ public class LAM {
     private Client client;
     private static int x = 1000;
     private String servername = "lamchat";
-    private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
+    private String servermbox = "server1@Mortezas-MacBook-Pro.local";
 
     public LAM(){
-
     }
 
     public static void incX() {
@@ -56,23 +55,28 @@ public class LAM {
     public void loadData() throws OtpErlangExit, OtpErlangDecodeException {
         OtpErlangAtom msgType = new OtpErlangAtom("newuser");
         OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.client.getMbox().self(), msgType});
-        this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
-
+        OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
+                this.client.getMbox().self(), this.client.getNode().createRef() });
+        OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
+                new OtpErlangAtom("$gen_call"), from, outMsg });
+        this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
+        // TODO: handle the response
         OtpErlangObject msg = this.client.getMbox().receive();
         OtpErlangTuple t = (OtpErlangTuple) msg;
-
-        msgType = (OtpErlangAtom) t.elementAt(0);
-
-        OtpErlangAtom rooms = new OtpErlangAtom("rooms");
-
-        if(msgType.equals(rooms)){
-            OtpErlangList availableRooms = (OtpErlangList) t.elementAt(1);
-            System.out.print("Current Rooms: ");
-            System.out.println(availableRooms);
-        }
-        else{
-            System.out.println("Server is behaving abnormally");
-        }
+        System.out.println(t.toString());
+//
+//        msgType = (OtpErlangAtom) t.elementAt(0);
+//
+//        OtpErlangAtom rooms = new OtpErlangAtom("rooms");
+//
+//        if(msgType.equals(rooms)){
+//            OtpErlangList availableRooms = (OtpErlangList) t.elementAt(1);
+//            System.out.print("Current Rooms: ");
+//            System.out.println(availableRooms);
+//        }
+//        else{
+//            System.out.println("Server is behaving abnormally");
+//        }
     }
 
     public Room handleLocalData(Room chatRoom, String username, OtpErlangList currentUsers){
@@ -102,9 +106,12 @@ public class LAM {
             username = sc.nextLine();
             OtpErlangString potentialUsername = new OtpErlangString(username);
             OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.client.getMbox().self(), msgType, roomname, potentialUsername});
-
-            this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
-
+            OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
+                    this.client.getMbox().self(), this.client.getNode().createRef() });
+            OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
+                    new OtpErlangAtom("$gen_call"), from, outMsg });
+            this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
+            // TODO: handle the response
             OtpErlangObject msg = this.client.getMbox().receive();
             OtpErlangTuple t = (OtpErlangTuple) msg;
 
@@ -130,6 +137,7 @@ public class LAM {
         OtpErlangString roomname = new OtpErlangString(this.getClient().getChatRoom().getRoomName());
         OtpErlangString username = new OtpErlangString(this.getClient().getUser().getUsername());
         OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{msgType, this.client.getMbox().self(), roomname, username});
+        // TODO: first needs to implemented in gen_server
         this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
     }
 

@@ -128,7 +128,12 @@ public class Client{
         OtpErlangString username = new OtpErlangString(this.user.getUsername());
         OtpErlangAtom msgType = new OtpErlangAtom("clientListen");
         OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, username});
-        this.mbox.send(this.servername, this.servermbox, outMsg);
+        OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
+                this.mbox.self(), this.node.createRef() });
+        OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
+                new OtpErlangAtom("$gen_call"), from, outMsg });
+        this.mbox.send(this.servername, this.servermbox, msg_gen);
+        // TODO : handle the response?
     }
 
     public void send(String to, boolean type) throws OtpErlangExit, OtpErlangDecodeException {
@@ -147,7 +152,12 @@ public class Client{
         String message= sc.nextLine();
         OtpErlangString msg = new OtpErlangString(message);
         OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, msg, username, destType, destination});
-        this.mbox.send(this.servername, this.servermbox, outMsg);
+        OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
+                this.mbox.self(), this.node.createRef() });
+        OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
+                new OtpErlangAtom("$gen_call"), from, outMsg });
+        this.mbox.send(this.servername, this.servermbox, msg_gen);
+        // TODO : handle the response
         User sender = new User(username.toString().replace("\"", ""));
         Date date = new Date();
         Message m = new Message(sender,msg.toString(),date);
