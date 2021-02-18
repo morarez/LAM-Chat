@@ -147,18 +147,6 @@ public class LAM {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
 
-        this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), outMsg);
-
-        OtpErlangObject reply = this.client.getMbox().receive();
-        OtpErlangTuple t = (OtpErlangTuple) reply;
-        OtpErlangTuple important = (OtpErlangTuple) t.elementAt(1);
-        OtpErlangAtom ok = new OtpErlangAtom("ok");
-        if(important.elementAt(0).equals(ok)){
-            System.out.println("You left the room successfully");
-        }
-        else{
-            System.out.println("The server is behaving abnormally");
-        }
     }
 
 
@@ -182,6 +170,7 @@ public class LAM {
             String answer = sc.nextLine();
 
             if (answer.equals("x")){
+                myExecSrv.shutdownNow();
                 break;
             }
 
@@ -219,8 +208,6 @@ public class LAM {
                     break;
                 }
             }
-            //can't close the app (need to discuss tomorrow)
-            clientReceiver.interrupt();
             myExecSrv.shutdownNow();
             LAM.incX();
         }

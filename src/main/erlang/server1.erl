@@ -66,7 +66,7 @@ handle_call({send, Msg, Sender, user, User}, _From, Clients) ->
 handle_call({exit, Room, User}, _From, Clients) ->
   NewClients = remove(User, Room, Clients),
   broadcast(disconnect, filterByRoom(NewClients, Room), {User}),
-  {reply, {ok}, NewClients};
+  {reply, {interrupt}, NewClients};
 
 
 handle_call(Request, _From, State) ->

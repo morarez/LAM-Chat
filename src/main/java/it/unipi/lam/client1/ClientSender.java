@@ -40,9 +40,9 @@ public class ClientSender implements Runnable{
                 }
                 if(!sent) System.out.println("Username does not exist in this chat room");
             }
+            latch.countDown();
         } catch (OtpErlangExit | OtpErlangDecodeException otpErlangExit) {
             otpErlangExit.printStackTrace();
         }
-        latch.countDown();
     }
 }

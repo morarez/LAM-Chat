@@ -87,7 +87,7 @@ public class Client{
 
 
 
-    public void receive() throws OtpErlangExit, OtpErlangDecodeException {
+    public OtpErlangTuple receive() throws OtpErlangExit, OtpErlangDecodeException {
 
         OtpErlangObject reply = this.mbox.receive();
 
@@ -110,7 +110,7 @@ public class Client{
                 User u = new User(t.elementAt(1).toString().replace("\"", ""));
                 this.chatRoom.join(u);
             }
-
+            return null;
         }
         else if (t.elementAt(0).equals(new_msg)){
             OtpErlangString username = (OtpErlangString) t.elementAt(1);
@@ -120,6 +120,24 @@ public class Client{
             Date date = new Date();
             Message m = new Message(sender, message.toString(), date);
             this.chatRoom.sendMessage(m);
+            return null;
+        }
+        else {
+            OtpErlangTuple important = (OtpErlangTuple) t.elementAt(1);
+            OtpErlangAtom ok = new OtpErlangAtom("ok");
+            OtpErlangAtom interrupt = new OtpErlangAtom("interrupt");
+            if(important.elementAt(0).equals(ok)){
+                System.out.println("Message was sent");
+                return null;
+            }
+            else if (important.elementAt(0).equals(interrupt)){
+                return important;
+            }
+            else{
+                System.out.println("Server is behaving abnormally");
+                return null;
+            }
+
         }
     }
 
@@ -168,16 +186,6 @@ public class Client{
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.mbox.send(this.servername, this.servermbox, msg_gen);
 
-        OtpErlangObject reply = this.mbox.receive();
-        OtpErlangTuple t = (OtpErlangTuple) reply;
-        OtpErlangTuple important = (OtpErlangTuple) t.elementAt(1);
-        OtpErlangAtom ok = new OtpErlangAtom("ok");
-        if(important.elementAt(0).equals(ok)){
-            System.out.println("Message was sent");
-        }
-        else{
-            System.out.println("Server is behaving abnormally");
-        }
 
         User sender = new User(username.toString().replace("\"", ""));
         Date date = new Date();
