@@ -1,4 +1,6 @@
-package it.unipi.lam;
+package it.unipi.lam.entities;
+
+
 
 import java.util.Date;
 

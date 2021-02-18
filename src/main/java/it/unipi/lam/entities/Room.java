@@ -1,4 +1,4 @@
-package it.unipi.lam;
+package it.unipi.lam.entities;
 
 import java.util.ArrayList;
 import java.util.List;

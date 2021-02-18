@@ -1,8 +1,8 @@
 package it.unipi.lam.client1;
 
 import com.ericsson.otp.erlang.*;
-import it.unipi.lam.Room;
-import it.unipi.lam.User;
+import it.unipi.lam.entities.Room;
+import it.unipi.lam.entities.User;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +15,7 @@ public class LAM {
     private Client client;
     private static int x = 2000;
     private String servername = "lamchat";
-    private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
+    private String servermbox = "server1@Mortezas-MacBook-Pro.local";
 
     public LAM(){
     }
@@ -61,7 +61,13 @@ public class LAM {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
 
-        OtpErlangObject reply = this.client.getMbox().receive();
+        OtpErlangObject reply = this.client.getMbox().receive(5000);
+
+        if (reply == null){
+            //handle faulty server
+            System.out.println("Server is down");
+            return;
+        }
 
         OtpErlangTuple t = (OtpErlangTuple) reply;
         OtpErlangTuple msg = (OtpErlangTuple) t.elementAt(1);
@@ -113,7 +119,13 @@ public class LAM {
                     new OtpErlangAtom("$gen_call"), from, outMsg });
             this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
 
-            OtpErlangObject reply = this.client.getMbox().receive();
+            OtpErlangObject reply = this.client.getMbox().receive(5000);
+
+            if(reply == null){
+                System.out.println("Server is down");
+                //handle server down
+                return null;
+            }
 
             OtpErlangTuple t = (OtpErlangTuple) reply;
             OtpErlangTuple msg = (OtpErlangTuple) t.elementAt(1);
@@ -146,7 +158,6 @@ public class LAM {
         OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
-
     }
 
 

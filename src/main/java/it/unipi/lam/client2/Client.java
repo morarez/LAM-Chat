@@ -1,9 +1,9 @@
 package it.unipi.lam.client2;
 
 import com.ericsson.otp.erlang.*;
-import it.unipi.lam.Message;
-import it.unipi.lam.Room;
-import it.unipi.lam.User;
+import it.unipi.lam.entities.Message;
+import it.unipi.lam.entities.Room;
+import it.unipi.lam.entities.User;
 
 import java.io.IOException;
 import java.util.Date;
@@ -13,7 +13,6 @@ import java.util.Scanner;
 public class Client{
     private final OtpNode node;
     private final OtpMbox mbox;
-
 //    private String nodename = "ahmed@localhost";
 //    private String mboxname = "ahmedbox";
 //    private String cookie = "";
@@ -88,8 +87,12 @@ public class Client{
 
 
     public OtpErlangTuple receive() throws OtpErlangExit, OtpErlangDecodeException {
-
         OtpErlangObject reply = this.mbox.receive();
+
+        if (reply == null){
+            return new OtpErlangTuple(new OtpErlangObject[]{new OtpErlangAtom("down")});
+        }
+
 
         OtpErlangTuple t = (OtpErlangTuple) reply;
 
@@ -156,7 +159,6 @@ public class Client{
 
         if (reply == null){
             System.out.println("Server is down now");
-            //handle down server
             return;
         }
 
@@ -187,14 +189,16 @@ public class Client{
         System.out.println("Enter your message to send: ");
         String message= sc.nextLine();
         OtpErlangString msg = new OtpErlangString(message);
+
         OtpErlangList outMsg = new OtpErlangList(new OtpErlangObject[]{msgType, msg, username, destType, destination});
 
+
+        //OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{msgType, msg, username, destType, destination});
         OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
                 this.mbox.self(), this.node.createRef() });
         OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.mbox.send(this.servername, this.servermbox, msg_gen);
-
 
         User sender = new User(username.toString().replace("\"", ""));
         Date date = new Date();
