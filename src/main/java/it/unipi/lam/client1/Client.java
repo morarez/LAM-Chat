@@ -88,11 +88,10 @@ public class Client{
 
 
     public void receive() throws OtpErlangExit, OtpErlangDecodeException {
-        OtpErlangObject msg = this.mbox.receive();
-        OtpErlangTuple t = (OtpErlangTuple) msg;
 
-        OtpErlangAtom msgType = (OtpErlangAtom) t.elementAt(0);
+        OtpErlangObject reply = this.mbox.receive();
 
+        OtpErlangTuple t = (OtpErlangTuple) reply;
 
         OtpErlangAtom info = new OtpErlangAtom("info");
         OtpErlangAtom joined = new OtpErlangAtom("joined");
@@ -100,7 +99,7 @@ public class Client{
 
         OtpErlangAtom new_msg = new OtpErlangAtom("new_msg");
 
-        if(msgType.equals(info)){
+        if(t.elementAt(0).equals(info)){
             System.out.println(t.elementAt(1) + " has " + t.elementAt(2));
 
             if (t.elementAt(2).equals(left)){
@@ -111,9 +110,9 @@ public class Client{
                 User u = new User(t.elementAt(1).toString().replace("\"", ""));
                 this.chatRoom.join(u);
             }
-        }
 
-        else if (msgType.equals(new_msg)){
+        }
+        else if (t.elementAt(0).equals(new_msg)){
             OtpErlangString username = (OtpErlangString) t.elementAt(1);
             OtpErlangString message = (OtpErlangString) t.elementAt(2);
             //need to include datetime later
@@ -124,11 +123,27 @@ public class Client{
         }
     }
 
-    public void sendListenAddress(){
+    public void sendListenAddress() throws OtpErlangExit, OtpErlangDecodeException {
         OtpErlangString username = new OtpErlangString(this.user.getUsername());
         OtpErlangAtom msgType = new OtpErlangAtom("clientListen");
         OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, username});
-        this.mbox.send(this.servername, this.servermbox, outMsg);
+        OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
+                this.mbox.self(), this.node.createRef() });
+        OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
+                new OtpErlangAtom("$gen_call"), from, outMsg });
+        this.mbox.send(this.servername, this.servermbox, msg_gen);
+
+        OtpErlangObject reply = this.mbox.receive();
+        OtpErlangTuple t = (OtpErlangTuple) reply;
+        OtpErlangTuple important = (OtpErlangTuple) t.elementAt(1);
+        OtpErlangAtom ok = new OtpErlangAtom("ok");
+        if(important.elementAt(0).equals(ok)){
+            System.out.println("Receiver process initiated");
+        }
+        else{
+            System.out.println("Server is behaving abnormally");
+        }
+
     }
 
     public void send(String to, boolean type) throws OtpErlangExit, OtpErlangDecodeException {
@@ -146,8 +161,24 @@ public class Client{
         System.out.println("Enter your message to send: ");
         String message= sc.nextLine();
         OtpErlangString msg = new OtpErlangString(message);
-        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, msg, username, destType, destination});
-        this.mbox.send(this.servername, this.servermbox, outMsg);
+        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{msgType, msg, username, destType, destination});
+        OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
+                this.mbox.self(), this.node.createRef() });
+        OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
+                new OtpErlangAtom("$gen_call"), from, outMsg });
+        this.mbox.send(this.servername, this.servermbox, msg_gen);
+
+        OtpErlangObject reply = this.mbox.receive();
+        OtpErlangTuple t = (OtpErlangTuple) reply;
+        OtpErlangTuple important = (OtpErlangTuple) t.elementAt(1);
+        OtpErlangAtom ok = new OtpErlangAtom("ok");
+        if(important.elementAt(0).equals(ok)){
+            System.out.println("Message was sent");
+        }
+        else{
+            System.out.println("Server is behaving abnormally");
+        }
+
         User sender = new User(username.toString().replace("\"", ""));
         Date date = new Date();
         Message m = new Message(sender,msg.toString(),date);

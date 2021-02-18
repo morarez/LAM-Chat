@@ -29,7 +29,7 @@ init([]) ->
   {ok, []}.
 
 %% connecting to the server
-handle_call({From, newuser}, _From, Clients) ->
+handle_call({newuser}, _From, Clients) ->
   Reply =  {rooms, getRooms(Clients)},
   {reply, Reply, Clients};
 
@@ -39,29 +39,34 @@ handle_call({From, connect, Room, Username}, _From, Clients) ->
   Found = find(TakenNames, Username),
   if
     Found ->
-      Reply =  {taken, Username};
+      Reply =  {taken, Username},
+      {reply, Reply, Clients};
     true ->
       Reply =  {users, getUsers(filterByRoom(Clients, Room))},
-      broadcast(join, filterByRoom(Clients, Room), {Username})
-  end,
-  {reply, Reply, Clients};
+      broadcast(join, filterByRoom(Clients, Room), {Username}),
+      {reply, Reply, [{Room, Username, From} | Clients]}
+  end;
 
 %%
 handle_call({From, clientListen, User}, _From, Clients) ->
-  reset(Clients, User, From),
-  {reply, ok, Clients};
+  NewClients = reset(Clients, User, From),
+  {reply, {ok}, NewClients};
 
 %% sending the msg to chatroom
-handle_call({From, send, Msg, User, room, Room}, _From, Clients) ->
+handle_call({send, Msg, User, room, Room}, _From, Clients) ->
   broadcast(new_msg, remove(User,filterByRoom(Clients, Room)), {User, Msg}),
-  {reply, ok, Clients};
+  {reply, {ok}, Clients};
 
 %% sending the msg to direct
-handle_call({From, send, Msg, Sender, user, User}, _From, Clients) ->
+handle_call({send, Msg, Sender, user, User}, _From, Clients) ->
   %% we should fix this broadcast
   broadcast(new_msg, filterByUser(Clients, User), {Sender, Msg}),
-  {reply, ok, Clients};
+  {reply, {ok}, Clients};
 
+handle_call({exit, Room, User}, _From, Clients) ->
+  NewClients = remove(User, Room, Clients),
+  broadcast(disconnect, filterByRoom(NewClients, Room), {User}),
+  {reply, {ok}, NewClients};
 
 
 handle_call(Request, _From, State) ->

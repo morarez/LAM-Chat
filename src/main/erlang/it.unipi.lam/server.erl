@@ -65,6 +65,10 @@ loop(Clients) ->
       loop(Clients)
   end.
 
+%%%WHAT IF THE USER JUST LEAVES , WHAT ABOUT 'EXIT' (ATOM OR STRING)
+%%%ADD THE COOL FEATURE OF SUSPEND
+%%%what happens if the server doesn't receive the receiver address
+%%%how about adding an admin
 
 remove(User, Room, [H|T]) ->
   {Roomname, Username, _} = H,
