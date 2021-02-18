@@ -1,21 +1,23 @@
 package it.unipi.lam.client2;
 
 import com.ericsson.otp.erlang.*;
-import it.unipi.lam.Room;
-import it.unipi.lam.User;
-
+import it.unipi.lam.entities.Room;
+import it.unipi.lam.entities.User;
 import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.apache.log4j.PropertyConfigurator;
 
 public class LAM {
     private Client client;
     private static int x = 3000;
     private String servername = "lamchat";
-    private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
+    private String servermbox = "server1@Leena";
+    // private String servermbox = "server1@Mortezas-MacBook-Pro.local";
+   // private String servermbox = "server@ahmed-HP-15-NoteBook-PC";
 
     public LAM(){
     }
@@ -163,9 +165,15 @@ public class LAM {
 
 
     public static void main(String[] args) throws IOException, OtpErlangExit, OtpErlangDecodeException, InterruptedException {
-
+    	String path = System.getProperty("user.dir") + "/log.properties";
+    	PropertyConfigurator.configure(path);
+        ExecutorService myExecSrv = Executors.newFixedThreadPool(3);
+        LAM lam1 = new LAM();
+        Client pingpong = new Client("pingpong"+LAM.getX()+"@localhost","pingpong"+LAM.getX(),"",lam1.getServername(),lam1.getServermbox());
+        lam1.setClient(pingpong);
+        ClientPingPong pingpongclient = new ClientPingPong(lam1.getClient());
+        myExecSrv.execute(pingpongclient);
         while (true) {
-            ExecutorService myExecSrv = Executors.newFixedThreadPool(2);
             CountDownLatch latch;
             System.out.println("Welcome to LAM!");
             System.out.println("If you want to close the app, press x");

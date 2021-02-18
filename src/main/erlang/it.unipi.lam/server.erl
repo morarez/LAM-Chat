@@ -15,13 +15,23 @@
 
 start() -> spawn(fun init/0).
 
-init() -> loop([]).
+init() -> loop([]),pong().
+
+pong() ->
+	receive
+	{ping,From} ->
+				From ! {pong},
+				pong()
+end.
 
 loop(Clients) ->
   %% convert the exit signals to normal msg
   %% process_flag(trap_exit, true),
   %% receive messages from other processes
   receive
+	   %%handle recovery
+	%%{From,recovery,Room,User} ->
+	%%	loop([{From,connect,Room,User}]);
   %%send available rooms to new user
     {From, newuser} ->
       From ! {rooms, getRooms(Clients)},

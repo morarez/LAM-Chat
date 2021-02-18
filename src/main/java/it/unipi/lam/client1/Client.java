@@ -1,9 +1,9 @@
 package it.unipi.lam.client1;
 
 import com.ericsson.otp.erlang.*;
-import it.unipi.lam.Message;
-import it.unipi.lam.Room;
-import it.unipi.lam.User;
+import it.unipi.lam.entities.Message;
+import it.unipi.lam.entities.Room;
+import it.unipi.lam.entities.User;
 
 import java.io.IOException;
 import java.util.Date;

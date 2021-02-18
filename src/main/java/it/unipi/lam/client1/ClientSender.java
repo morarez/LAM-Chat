@@ -2,7 +2,7 @@ package it.unipi.lam.client1;
 
 import com.ericsson.otp.erlang.OtpErlangDecodeException;
 import com.ericsson.otp.erlang.OtpErlangExit;
-import it.unipi.lam.User;
+import it.unipi.lam.entities.User;
 
 import java.util.List;
 import java.util.Scanner;
