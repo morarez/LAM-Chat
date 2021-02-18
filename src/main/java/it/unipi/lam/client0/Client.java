@@ -13,7 +13,6 @@ import java.util.Scanner;
 public class Client{
     private final OtpNode node;
     private final OtpMbox mbox;
-
 //    private String nodename = "ahmed@localhost";
 //    private String mboxname = "ahmedbox";
 //    private String cookie = "";
@@ -88,8 +87,12 @@ public class Client{
 
 
     public OtpErlangTuple receive() throws OtpErlangExit, OtpErlangDecodeException {
-
         OtpErlangObject reply = this.mbox.receive();
+
+        if (reply == null){
+            return new OtpErlangTuple(new OtpErlangObject[]{new OtpErlangAtom("down")});
+        }
+
 
         OtpErlangTuple t = (OtpErlangTuple) reply;
 
@@ -143,15 +146,22 @@ public class Client{
 
     public void sendListenAddress() throws OtpErlangExit, OtpErlangDecodeException {
         OtpErlangString username = new OtpErlangString(this.user.getUsername());
+        OtpErlangString roomname = new OtpErlangString(this.chatRoom.getRoomName());
         OtpErlangAtom msgType = new OtpErlangAtom("clientListen");
-        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, username});
+        OtpErlangTuple outMsg = new OtpErlangTuple(new OtpErlangObject[]{this.mbox.self(), msgType, username, roomname});
         OtpErlangTuple from = new OtpErlangTuple(new OtpErlangObject[] {
                 this.mbox.self(), this.node.createRef() });
         OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.mbox.send(this.servername, this.servermbox, msg_gen);
 
-        OtpErlangObject reply = this.mbox.receive();
+        OtpErlangObject reply = this.mbox.receive(5000);
+
+        if (reply == null){
+            System.out.println("Server is down now");
+            return;
+        }
+
         OtpErlangTuple t = (OtpErlangTuple) reply;
         OtpErlangTuple important = (OtpErlangTuple) t.elementAt(1);
         OtpErlangAtom ok = new OtpErlangAtom("ok");
@@ -185,7 +195,6 @@ public class Client{
         OtpErlangObject msg_gen = new OtpErlangTuple(new OtpErlangObject[] {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.mbox.send(this.servername, this.servermbox, msg_gen);
-
 
         User sender = new User(username.toString().replace("\"", ""));
         Date date = new Date();

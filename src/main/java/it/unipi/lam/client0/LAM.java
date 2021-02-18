@@ -61,7 +61,13 @@ public class LAM {
                 new OtpErlangAtom("$gen_call"), from, outMsg });
         this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
 
-        OtpErlangObject reply = this.client.getMbox().receive();
+        OtpErlangObject reply = this.client.getMbox().receive(5000);
+
+        if (reply == null){
+            //handle faulty server
+            System.out.println("Server is down");
+            return;
+        }
 
         OtpErlangTuple t = (OtpErlangTuple) reply;
         OtpErlangTuple msg = (OtpErlangTuple) t.elementAt(1);
@@ -113,7 +119,13 @@ public class LAM {
                     new OtpErlangAtom("$gen_call"), from, outMsg });
             this.client.getMbox().send(this.client.getServername(), this.client.getServerMbox(), msg_gen);
 
-            OtpErlangObject reply = this.client.getMbox().receive();
+            OtpErlangObject reply = this.client.getMbox().receive(5000);
+
+            if(reply == null){
+                System.out.println("Server is down");
+                //handle server down
+                return null;
+            }
 
             OtpErlangTuple t = (OtpErlangTuple) reply;
             OtpErlangTuple msg = (OtpErlangTuple) t.elementAt(1);

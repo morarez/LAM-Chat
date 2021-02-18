@@ -6,7 +6,7 @@
 %%% @end
 %%% Created : 16. Feb 2021 17:40
 %%%-------------------------------------------------------------------
--module(server1).
+-module(server).
 -author("mortezaarezoomandan").
 
 -compile([debug_info]).
@@ -26,7 +26,8 @@ start_link() ->
   gen_server:start_link({local,lamchat},?MODULE, [], []).
 
 init([]) ->
-  {ok, []}.
+  Clients = gen_server:call(lamchatbackup, {recover}),
+  {ok, Clients}.
 
 %% connecting to the server
 handle_call({newuser}, _From, Clients) ->
@@ -44,12 +45,14 @@ handle_call({From, connect, Room, Username}, _From, Clients) ->
     true ->
       Reply =  {users, getUsers(filterByRoom(Clients, Room))},
       broadcast(join, filterByRoom(Clients, Room), {Username}),
+      gen_server:call(lamchatbackup, {connect, From, Room, Username}),
       {reply, Reply, [{Room, Username, From} | Clients]}
   end;
 
 %%
-handle_call({From, clientListen, User}, _From, Clients) ->
-  NewClients = reset(Clients, User, From),
+handle_call({From, clientListen, User, Room}, _From, Clients) ->
+  NewClients = reset(Clients, User, From, Room),
+  gen_server:call(lamchatbackup, {clientListen, From, User, Room}),
   {reply, {ok}, NewClients};
 
 %% sending the msg to chatroom
@@ -65,6 +68,7 @@ handle_call({send, Msg, Sender, user, User}, _From, Clients) ->
 
 handle_call({exit, Room, User}, _From, Clients) ->
   NewClients = remove(User, Room, Clients),
+  gen_server:call(lamchatbackup, {exit, Room, User}),
   broadcast(disconnect, filterByRoom(NewClients, Room), {User}),
   {reply, {interrupt}, NewClients};
 
@@ -104,13 +108,13 @@ remove(User, [H|T]) ->
       remove(User, T++[H])
   end.
 
-reset([H|T], User, From) ->
-  {Room, Username, _} = H,
+reset([H|T], User, From, Room) ->
+  {Roomname, Username, _} = H,
   if
-    User == Username ->
+    (User == Username) and (Room == Roomname) ->
       [{Room, Username, From}|T];
     true ->
-      reset(T++[H], User, From)
+      reset(T++[H], User, From, Room)
   end.
 
 
